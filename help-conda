@@ -1,0 +1,19 @@
+# set up conda environment as in https://esgf-pyclient.readthedocs.io/en/latest/quickstart.html
+# python=3.8 is enough (and has more pkg available)
+
+# for serverside cropping: xarray netcdf4 dask
+# for plotting: matplotlib cartopy
+
+# conda create -n esgf -c conda-forge esgf-pyclient xarray
+
+# python 3.8 to allow iris pkg
+conda create -n esgf -c conda-forge python=3.8 esgf-pyclient xarray netcdf4 dask
+
+conda activate esgf
+
+
+# to use xarray functionality, additional packages are required (make sure you are in the right environment)
+conda install matplotlib cartopy
+
+# for logon? maybe not needed
+conda install -c conda-forge myproxyclient

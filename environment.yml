@@ -1,0 +1,14 @@
+name: esgf
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.8
+  - xarray
+  - esgf-pyclient
+  - netcdf4
+  - matplotlib
+  - cartopy
+  - dask
+prefix: /home/mitch/miniconda3/envs/esgf2
+
