@@ -3,6 +3,5 @@
 .RData
 .Ruserdata
 temp/
-data-raw/
 data-nc/
 py/myproxy_password.txt
