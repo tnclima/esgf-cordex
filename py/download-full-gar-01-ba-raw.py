@@ -1,7 +1,7 @@
 # download example rcp85 (same as hist) cropped to GAR
 
-path_out = "/media/mitch/usb 160GB/cordex-data/"
-file_already_downloaded = "/media/mitch/usb 160GB/cordex-downloaded.txt"
+path_out = "/home/climatedata/eurocordex/"
+file_already_downloaded = "/home/climatedata/eurocordex/cordex-downloaded.txt"
 
 
 # modules
@@ -46,12 +46,20 @@ def crop_download(result, path, verbose=True):
     file_out = os.path.join(path, files[i].filename)
     if(os.path.exists(file_out)):
       continue
-    ds = xr.open_dataset(od_url, chunks={'time': 120})
-    ds = ds.sel(rlat=slice(-8, -1), rlon=slice(-11, 0))
-    ds.to_netcdf(file_out)
-    if verbose: 
-      print(datetime.now().isoformat())
-      print(file_out)
+    
+    try:
+      ds = xr.open_dataset(od_url, chunks={'time': 120})
+      ds = ds.sel(rlat=slice(-8, -1), rlon=slice(-11, 0))
+      ds.to_netcdf(file_out)
+      if verbose: 
+        print(datetime.now().isoformat())
+        print(file_out)
+    except (KeyError, OSError):
+      print("Error: " + result.dataset_id)
+      return False
+  
+  return True
+
 
 def add_id_downloaded(filename, dataset_id):
   with open(filename, "a") as f:
@@ -93,8 +101,9 @@ for i, ds in enumerate(ds_all):
     ds2_var = ds2_info[10]
     ds2_path = os.path.join(path_out, ds2_var)
     os.makedirs(ds2_path, exist_ok=True)
-    crop_download(ds2, ds2_path)
-    add_id_downloaded(file_already_downloaded, ds2.dataset_id)
+    success = crop_download(ds2, ds2_path)
+    if success:
+      add_id_downloaded(file_already_downloaded, ds2.dataset_id)
   
   # also download the same RCM without bias adjustment (historical)
   i_ctx = conn.new_context(
@@ -112,8 +121,9 @@ for i, ds in enumerate(ds_all):
     ds2_var = ds2_info[10]
     ds2_path = os.path.join(path_out, ds2_var)
     os.makedirs(ds2_path, exist_ok=True)
-    crop_download(ds2, ds2_path)
-    add_id_downloaded(file_already_downloaded, ds2.dataset_id)
+    success = crop_download(ds2, ds2_path)
+    if success:
+      add_id_downloaded(file_already_downloaded, ds2.dataset_id)
 
 
 
