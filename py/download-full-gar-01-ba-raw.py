@@ -94,6 +94,8 @@ for i, ds in enumerate(ds_all):
   ds_no_ba = i_ctx.search()
   if(len(ds_no_ba) > 1):
     raise RuntimeWarning("Multiple datasets for: " + str(ds_info))
+  if(len(ds_no_ba) == 0):
+    continue
   ds2 = ds_no_ba[0]
   
   if not ds2.dataset_id in id_downloaded:
@@ -114,6 +116,8 @@ for i, ds in enumerate(ds_all):
   ds_no_ba = i_ctx.search()
   if(len(ds_no_ba) > 1):
     raise RuntimeWarning("Multiple datasets for: " + str(ds_info))
+  if(len(ds_no_ba) == 0):
+    continue
   ds2 = ds_no_ba[0]
   
   if not ds2.dataset_id in id_downloaded:
