@@ -1,5 +1,6 @@
 # set up conda environment as in https://esgf-pyclient.readthedocs.io/en/latest/quickstart.html
 # python=3.8 is enough (and has more pkg available)
+# python=3.6 if using reticulate within RStudio on legolas
 
 # for serverside cropping: xarray netcdf4 dask
 # for plotting: matplotlib cartopy
