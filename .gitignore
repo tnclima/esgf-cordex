@@ -5,3 +5,7 @@
 temp/
 data-nc/
 py/myproxy_password.txt
+py/__pycache__/
+data-extract/
+*.log
+*.Rout

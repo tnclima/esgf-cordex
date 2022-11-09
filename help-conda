@@ -18,3 +18,5 @@ conda install matplotlib cartopy
 
 # for logon? maybe not needed
 conda install -c conda-forge myproxyclient
+
+# to download: pywget or requests, tqdm

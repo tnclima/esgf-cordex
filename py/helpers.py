@@ -5,6 +5,8 @@ from pyesgf.logon import LogonManager
 import os
 import xarray as xr
 from datetime import datetime # for info
+# import tempfile
+# import wget
 
 # set so no more warnings
 os.environ["ESGF_PYCLIENT_NO_FACETS_STAR_WARNING"] = "zzz"
@@ -30,7 +32,7 @@ def search_single(project="CORDEX", domain="EUR-11", time_frequency="day",
     project=project, domain=domain, time_frequency=time_frequency,
     **kwargs
     )
-  ds_all = ctx.search()
+  ds_all = ctx.search(ignore_facet_check=True)
   if(len(ds_all) > 1):
     raise RuntimeWarning("Multiple datasets for: " + str(kwargs))
   return ds_all[0]
@@ -55,6 +57,32 @@ def crop_download(result, path, verbose=True):
       if verbose: 
         print(datetime.now().isoformat())
         print(file_out)
+    except (KeyError, OSError, RuntimeError):
+      print("Error: " + result.dataset_id)
+      return False
+  
+  return True
+
+
+def download_tmp_crop(result, path, verbose=True):
+  
+  files = result.file_context().search()
+  download_urls = [f.download_url for f in files]
+
+  for i, download_url in enumerate(download_urls):
+    file_out = os.path.join(path, files[i].filename)
+    if(os.path.exists(file_out)):
+      continue
+    
+    try:
+      with tempfile.NamedTemporaryFile() as tmp:
+        wget.download(download_url, tmp.name)
+        ds = xr.open_dataset(tmp.name, chunks={'time': 120})
+        ds = ds.sel(rlat=slice(-8, -1), rlon=slice(-11, 0))
+        ds.to_netcdf(file_out)
+        if verbose: 
+          print(datetime.now().isoformat())
+          print(file_out)
     except (KeyError, OSError, RuntimeError):
       print("Error: " + result.dataset_id)
       return False
