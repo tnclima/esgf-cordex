@@ -64,28 +64,3 @@ def crop_download(result, path, verbose=True):
   return True
 
 
-def download_tmp_crop(result, path, verbose=True):
-  
-  files = result.file_context().search()
-  download_urls = [f.download_url for f in files]
-
-  for i, download_url in enumerate(download_urls):
-    file_out = os.path.join(path, files[i].filename)
-    if(os.path.exists(file_out)):
-      continue
-    
-    try:
-      with tempfile.NamedTemporaryFile() as tmp:
-        wget.download(download_url, tmp.name)
-        ds = xr.open_dataset(tmp.name, chunks={'time': 120})
-        ds = ds.sel(rlat=slice(-8, -1), rlon=slice(-11, 0))
-        ds.to_netcdf(file_out)
-        if verbose: 
-          print(datetime.now().isoformat())
-          print(file_out)
-    except (KeyError, OSError, RuntimeError):
-      print("Error: " + result.dataset_id)
-      return False
-  
-  return True
-

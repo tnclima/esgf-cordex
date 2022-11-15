@@ -1,13 +1,16 @@
-# download missing models and crop to GAR
+# download from liu.se servers requires wget scripts
+# -> create scripts automatically (and run them manually later in bash)
 
-path_out = "/home/climatedata/eurocordex/"
+path_out = "/home/climatedata/eurocordex-temp/"
 
 # modules
 import os
 import pandas as pd
 
 # import other functions
-from py.helpers import search_single, crop_download, esgf_logon
+import sys
+sys.path.append("py")
+from helpers import search_single, crop_download, esgf_logon
 # login
 esgf_logon()
 
@@ -23,7 +26,16 @@ for i in range(len(data_todo1)):
   ds_var = ds_info[10]
   ds_path = os.path.join(path_out, ds_var)
   os.makedirs(ds_path, exist_ok=True)
-  crop_download(ds, ds_path)
+  
+  file_wget = "wget_" + "_".join(data_todo1.iloc[i].to_list()) + ".sh"
+  file_wget_path = os.path.join(ds_path, file_wget)
+  fc = ds.file_context()
+  wget_script_content = fc.get_download_script()
+  
+  with open(file_wget_path, "w") as f:
+    f.write(wget_script_content)
+
+
 
 
 
@@ -38,7 +50,14 @@ for i in range(len(data_todo2)):
   ds_var = ds_info[10]
   ds_path = os.path.join(path_out, ds_var)
   os.makedirs(ds_path, exist_ok=True)
-  crop_download(ds, ds_path)
+  
+  file_wget = "wget_" + "_".join(data_todo2.iloc[i].to_list()) + ".sh"
+  file_wget_path = os.path.join(ds_path, file_wget)
+  fc = ds.file_context()
+  wget_script_content = fc.get_download_script()
+  
+  with open(file_wget_path, "w") as f:
+    f.write(wget_script_content)
 
 
 
