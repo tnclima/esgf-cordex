@@ -39,10 +39,12 @@ tibble(ll = readLines("data-raw/datasets-cordex-full.txt")) %>%
 
 # orog
 dat_esgf_adjust$rcm_name %>% table
+dat_esgf_full$rcm_name %>% table
 
 # remove rcms which do not have raw data and subset to 1/rcm
-dat_esgf_adjust %>% 
-  filter(! rcm_name %in% c("ARPEGE51", "WRF331F")) %>% 
+dat_esgf_full %>% 
+  filter(! rcm_name %in% c("ALADIN53", "ALARO-0", "ARPEGE51",
+                           "RegCM4-2", "WRF331F", "WRF361H")) %>% 
   select(institute:rcm_name) %>% 
   unique %>% 
   group_by(rcm_name) %>% 

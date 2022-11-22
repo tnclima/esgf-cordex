@@ -2,24 +2,17 @@
 
 library(eurocordexr)
 library(tidyverse)
+library(fs)
 
 # downloaded --------------------------------------------------------------
 
-
-
 dat_inv <- get_inventory("/home/climatedata/eurocordex/")
+dat_inv_files <- get_inventory("/home/climatedata/eurocordex/", add_files = T)
 dat_inv
 
-# check_inventory(dat_inv)
+dat_check <- check_inventory(dat_inv)
+dat_check
 
-dat_inv[, .N, institute_rcm]  
-dat_inv[institute_rcm == "CNRM-ARPEGE51"] # -> maybe remove?
-
-dat_inv[, .N, experiment]
-dat_inv[experiment == "rcp26"]
-# -> focus on rcp45 and rcp85?
-
-dat_inv[, .N, .(variable, gcm, institute_rcm)]
 
 # get common adjust and raw -------------------------------------------
 
@@ -91,6 +84,7 @@ dat_esgf2 %>%
 dat_adj_raw %>% 
   rbind(mutate(dat_adj_raw, experiment = "historical")) %>% 
   select(-variableAdjust) %>% 
+  unique %>% 
   mutate(institute_rcm = paste0(institute, "-", rcm_name)) %>% 
   rename(gcm = driving_model) %>% 
   anti_join(dat_inv) -> dat_todo1
@@ -105,11 +99,5 @@ dat_esgf2 %>%
   anti_join(dat_inv) -> dat_todo2
 
 fwrite(dat_todo2, "data-raw/to-download2.csv")
-
-
-
-
-
-
 
 
