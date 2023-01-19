@@ -45,6 +45,7 @@ dat_esgf_full$rcm_name %>% table
 dat_esgf_full %>% 
   filter(! rcm_name %in% c("ALADIN53", "ALARO-0", "ARPEGE51",
                            "RegCM4-2", "WRF331F", "WRF361H")) %>% 
+  filter(experiment != "evaluation") %>% 
   select(institute:rcm_name) %>% 
   unique %>% 
   group_by(rcm_name) %>% 
@@ -63,6 +64,7 @@ dat_esgf_adjust %>%
 # maybe replace with snd as proxy? other models do not have snd
 
 # dont forget to add historical!
+
 
 # rest of ensemble --------------------------------------------------------
 

@@ -40,8 +40,9 @@ def search_single(project="CORDEX", domain="EUR-11", time_frequency="day",
 
 
 
-def crop_download(result, path, verbose=True):
+def crop_download(result, path, verbose=True, crop=[-11.0, 0.0, -8.0, -1.0]):
   
+  xmin, xmax, ymin, ymax = crop
   files = result.file_context().search()
   od_urls = [f.opendap_url for f in files]
 
@@ -52,7 +53,7 @@ def crop_download(result, path, verbose=True):
     
     try:
       ds = xr.open_dataset(od_url, chunks={'time': 120})
-      ds = ds.sel(rlat=slice(-8, -1), rlon=slice(-11, 0))
+      ds = ds.sel(rlon=slice(xmin, xmax), rlat=slice(ymin, ymax))
       ds.to_netcdf(file_out)
       if verbose: 
         print(datetime.now().isoformat())
