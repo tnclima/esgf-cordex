@@ -54,6 +54,7 @@ dat_esgf2 %>%
 
 dat_adj_raw <- dat_esgf_adjust %>% semi_join(dat_esgf1)
 
+dat_esgf_adjust %>% anti_join(dat_esgf1)
 
 # compare to downloaded ---------------------------------------------------
 
@@ -81,20 +82,34 @@ dat_esgf2 %>%
 
 # create list to download -------------------------------------------------
 
-dat_adj_raw %>% 
-  rbind(mutate(dat_adj_raw, experiment = "historical")) %>% 
-  select(-variableAdjust) %>% 
-  unique %>% 
-  mutate(institute_rcm = paste0(institute, "-", rcm_name)) %>% 
-  rename(gcm = driving_model) %>% 
+dat_adj_raw %>%
+  rbind(mutate(dat_adj_raw, experiment = "historical")) %>%
+  select(-variableAdjust) %>%
+  unique %>%
+  mutate(institute_rcm = paste0(institute, "-", rcm_name)) %>%
+  rename(gcm = driving_model) %>%
   anti_join(dat_inv) -> dat_todo1
 
 fwrite(dat_todo1, "data-raw/to-download1.csv")
 
+# dat_esgf1 %>% 
+#   right_join(dat_adj_raw) %>% 
+#   select(institute:rcm_version, variable) %>% 
+#   rename(gcm = driving_model,
+#          downscale_realisation = rcm_version) %>% 
+#   mutate(institute_rcm = paste0(institute, "-", rcm_name)) %>% 
+#   anti_join(dat_inv) -> dat_todo2
+# 
+# fwrite(dat_todo2, "data-raw/to-download1.csv")
+
 dat_esgf2 %>% 
   filter(variable != "sfcWindAdjust") %>% 
+  right_join(dat_adj_raw %>% mutate(variable = variableAdjust)) %>% 
+  # filter(! rcm_name %in% c("ARPEGE51", "WRF331")) %>% # no raw available
+  filter(rcm_name != "REMO2009") %>% # done separately!
   select(institute:rcm_version, variable) %>% 
-  rename(gcm = driving_model) %>% 
+  rename(gcm = driving_model,
+         downscale_realisation = rcm_version) %>% 
   mutate(institute_rcm = paste0(institute, "-", rcm_name)) %>% 
   anti_join(dat_inv) -> dat_todo2
 
@@ -127,5 +142,19 @@ fwrite(dat_todo4, "data-raw/to-download5-remo2.csv")
 
 
 
+
+# rest of ensemble for temp precip ----------------------------------------
+
+
+dat_esgf1 %>%
+  filter(variable %in% c("tas", "tasmin", "tasmax", "pr")) %>% 
+  select(institute:rcm_version, variable) %>%
+  rename(gcm = driving_model,
+         downscale_realisation = rcm_version) %>%
+  mutate(institute_rcm = paste0(institute, "-", rcm_name)) %>%
+  filter(! institute_rcm %in% c("UHOH-WRF361H", "DHMZ-RegCM4-2", "CNRM-ALADIN53")) %>% # potentially also remove RMIB-UGent-ALARO-0, ICTP-RegCM4-6
+  anti_join(dat_inv) -> dat_todo_rest
+
+fwrite(dat_todo2, "data-raw/to-download1.csv")
 
 
