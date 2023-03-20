@@ -1,6 +1,7 @@
 # prep files to download from esgf
 
 library(eurocordexr)
+setDTthreads(2)
 library(tidyverse)
 
 

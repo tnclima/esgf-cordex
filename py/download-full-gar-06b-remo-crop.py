@@ -2,8 +2,8 @@
 
 # delete manually the non-cropped files afterwards!!
 
-path_in = "/home/climatedata/temp-remo/eurocordex-temp/tasmaxAdjust/"
-path_out = "/home/climatedata/temp-remo/eurocordex-temp3/tasmaxAdjust/"
+path_in = "/home/climatedata/temp-remo/eurocordex-temp/tasminAdjust/"
+path_out = "/home/climatedata/temp-remo/eurocordex-temp3/tasminAdjust/"
 
 import os
 from glob import glob

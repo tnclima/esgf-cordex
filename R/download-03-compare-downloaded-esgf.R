@@ -1,13 +1,14 @@
 # check the downloaded files
 
 library(eurocordexr)
+setDTthreads(2)
 library(tidyverse)
 library(fs)
 
 # downloaded --------------------------------------------------------------
 
 dat_inv <- get_inventory("/home/climatedata/eurocordex/merged/")
-dat_inv_files <- get_inventory("/home/climatedata/eurocordex/merged/", add_files = T)
+# dat_inv_files <- get_inventory("/home/climatedata/eurocordex/merged/", add_files = T)
 dat_inv
 
 dat_check <- check_inventory(dat_inv)
@@ -25,7 +26,7 @@ tibble(ll = readLines("data-raw/datasets-cordex-with-size.txt")) %>%
                  "variable", "version"), sep = "[.]") %>% 
   mutate(size_byte = as.numeric(size),
          size_GB_europe = size_byte/1024/1024/1024,
-         size_GB_GAR = size_GB_europe/20) -> dat_esgf1
+         size_GB_GAR = size_GB_europe/20) -> dat_esgf_raw
 
 tibble(ll = readLines("data-raw/datasets-cordex-adjust-with-size.txt")) %>% 
   separate(ll, c("zz", "esgf_node", "size"), sep = "[|]") %>% 
@@ -35,26 +36,26 @@ tibble(ll = readLines("data-raw/datasets-cordex-adjust-with-size.txt")) %>%
                  "variable", "version"), sep = "[.]") %>% 
   mutate(size_byte = as.numeric(size),
          size_GB_europe = size_byte/1024/1024/1024,
-         size_GB_GAR = size_GB_europe/20) -> dat_esgf2
+         size_GB_GAR = size_GB_europe/20) -> dat_esgf_adjust
 
 # merge and subset
-# dat_esgf <- rbind(dat_esgf1, dat_esgf2) %>% as.data.table
+# dat_esgf <- rbind(dat_esgf_raw, dat_esgf_adjust) %>% as.data.table
 # dat_esgf <- dat_esgf[startsWith(variable, "pr") | startsWith(variable, "tas") ] 
 # dat_esgf[, institute_rcm := paste0(institute, "-", rcm_name)]  
 # dat_esgf[, .N, institute_rcm] 
 # with(dat_esgf, table(institute_rcm, variable))
 
 # take only models with adjust
-dat_esgf2 %>% 
+dat_esgf_adjust %>% 
   filter(variable != "sfcWindAdjust") %>% 
   select(institute:rcm_name, variableAdjust = variable) %>% 
   mutate(variable = str_remove(variableAdjust, "Adjust")) %>% 
-  unique -> dat_esgf_adjust
+  unique -> dat_esgf_adjust_gcmrcm
 
 
-dat_adj_raw <- dat_esgf_adjust %>% semi_join(dat_esgf1)
+dat_adj_raw <- dat_esgf_adjust_gcmrcm %>% semi_join(dat_esgf_raw)
 
-dat_esgf_adjust %>% anti_join(dat_esgf1)
+dat_esgf_adjust_gcmrcm %>% anti_join(dat_esgf_raw)
 
 # compare to downloaded ---------------------------------------------------
 
@@ -67,13 +68,13 @@ dat_adj_raw %>%
 # RCA4 is missing from normal cordex!
 
 
-dat_esgf2 %>% 
+dat_esgf_adjust %>% 
   filter(variable != "sfcWindAdjust") %>% 
   select(institute:rcm_version, variable) %>% 
   rename(gcm = driving_model) %>% 
   mutate(institute_rcm = paste0(institute, "-", rcm_name)) %>% 
-  # anti_join(dat_inv) -> dat_zz
-  semi_join(dat_inv) -> dat_zz
+  anti_join(dat_inv) -> dat_zz
+  # semi_join(dat_inv) -> dat_zz
 
 
 # some missing
@@ -82,27 +83,30 @@ dat_esgf2 %>%
 
 # create list to download -------------------------------------------------
 
-dat_adj_raw %>%
-  rbind(mutate(dat_adj_raw, experiment = "historical")) %>%
-  select(-variableAdjust) %>%
-  unique %>%
+# dat_adj_raw %>%
+#   rbind(mutate(dat_adj_raw, experiment = "historical")) %>%
+#   select(-variableAdjust) %>%
+#   unique %>%
+#   mutate(institute_rcm = paste0(institute, "-", rcm_name)) %>%
+#   rename(gcm = driving_model) %>%
+#   anti_join(dat_inv) -> dat_todo1
+# 
+# fwrite(dat_todo1, "data-raw/to-download1-adjraw-raw.csv")
+
+dat_esgf_raw %>%
+  filter(variable %in% c("pr", "tas", "tasmin", "tasmax")) %>% 
+  filter(experiment != "evaluation") %>% 
+  right_join(dat_adj_raw) %>%
+  filter(rcm_name != "REMO2009") %>% # done separately!
+  select(institute:rcm_version, variable) %>%
+  rename(gcm = driving_model,
+         downscale_realisation = rcm_version) %>%
   mutate(institute_rcm = paste0(institute, "-", rcm_name)) %>%
-  rename(gcm = driving_model) %>%
   anti_join(dat_inv) -> dat_todo1
 
-fwrite(dat_todo1, "data-raw/to-download1.csv")
+fwrite(dat_todo1, "data-raw/to-download1-adjraw1-raw.csv")
 
-# dat_esgf1 %>% 
-#   right_join(dat_adj_raw) %>% 
-#   select(institute:rcm_version, variable) %>% 
-#   rename(gcm = driving_model,
-#          downscale_realisation = rcm_version) %>% 
-#   mutate(institute_rcm = paste0(institute, "-", rcm_name)) %>% 
-#   anti_join(dat_inv) -> dat_todo2
-# 
-# fwrite(dat_todo2, "data-raw/to-download1.csv")
-
-dat_esgf2 %>% 
+dat_esgf_adjust %>% 
   filter(variable != "sfcWindAdjust") %>% 
   right_join(dat_adj_raw %>% mutate(variable = variableAdjust)) %>% 
   # filter(! rcm_name %in% c("ARPEGE51", "WRF331")) %>% # no raw available
@@ -113,7 +117,7 @@ dat_esgf2 %>%
   mutate(institute_rcm = paste0(institute, "-", rcm_name)) %>% 
   anti_join(dat_inv) -> dat_todo2
 
-fwrite(dat_todo2, "data-raw/to-download2.csv")
+fwrite(dat_todo2, "data-raw/to-download1-adjraw2-adj.csv")
 
 
 
@@ -121,24 +125,27 @@ fwrite(dat_todo2, "data-raw/to-download2.csv")
 # redo remo because of grid +0.55 deg -------------------------------------
 
 
-dat_esgf2 %>% 
-  filter(variable != "sfcWindAdjust") %>% 
-  filter(rcm_name == "REMO2009") %>% 
-  select(institute:rcm_version, variable) %>% 
-  rename(gcm = driving_model) %>% 
-  mutate(institute_rcm = paste0(institute, "-", rcm_name)) -> dat_todo3
-
-fwrite(dat_todo3, "data-raw/to-download5-remo1.csv")
-
-dat_esgf1 %>% 
+dat_esgf_raw %>% 
   filter(variable %in% c("pr", "tas", "tasmin", "tasmax")) %>% 
   filter(experiment != "evaluation") %>% 
   filter(rcm_name == "REMO2009") %>% 
   select(institute:rcm_version, variable) %>% 
-  rename(gcm = driving_model) %>% 
-  mutate(institute_rcm = paste0(institute, "-", rcm_name)) -> dat_todo4
+  rename(gcm = driving_model, downscale_realisation = rcm_version) %>% 
+  mutate(institute_rcm = paste0(institute, "-", rcm_name)) %>% 
+  anti_join(dat_inv) -> dat_todo3
 
-fwrite(dat_todo4, "data-raw/to-download5-remo2.csv")
+fwrite(dat_todo3, "data-raw/to-download5-remo1-raw.csv")
+
+dat_esgf_adjust %>% 
+  filter(variable != "sfcWindAdjust") %>% 
+  filter(rcm_name == "REMO2009") %>% 
+  select(institute:rcm_version, variable) %>% 
+  rename(gcm = driving_model, downscale_realisation = rcm_version) %>% 
+  mutate(institute_rcm = paste0(institute, "-", rcm_name)) %>% 
+  anti_join(dat_inv) -> dat_todo4
+
+fwrite(dat_todo4, "data-raw/to-download5-remo2-adj.csv")
+
 
 
 
@@ -146,15 +153,17 @@ fwrite(dat_todo4, "data-raw/to-download5-remo2.csv")
 # rest of ensemble for temp precip ----------------------------------------
 
 
-dat_esgf1 %>%
+dat_esgf_raw %>%
   filter(variable %in% c("tas", "tasmin", "tasmax", "pr")) %>% 
+  filter(experiment != "evaluation") %>% 
   select(institute:rcm_version, variable) %>%
   rename(gcm = driving_model,
          downscale_realisation = rcm_version) %>%
   mutate(institute_rcm = paste0(institute, "-", rcm_name)) %>%
-  filter(! institute_rcm %in% c("UHOH-WRF361H", "DHMZ-RegCM4-2", "CNRM-ALADIN53")) %>% # potentially also remove RMIB-UGent-ALARO-0, ICTP-RegCM4-6
+  filter(! institute_rcm %in% c("UHOH-WRF361H", "DHMZ-RegCM4-2", "CNRM-ALADIN53")) %>% 
+  # potentially also remove RMIB-UGent-ALARO-0, ICTP-RegCM4-6
   anti_join(dat_inv) -> dat_todo_rest
 
-fwrite(dat_todo2, "data-raw/to-download1.csv")
+fwrite(dat_todo_rest, "data-raw/to-download2-rest-ensemble.csv")
 
 
