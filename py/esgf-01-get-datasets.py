@@ -6,7 +6,7 @@ from pyesgf.search import SearchConnection
 
 conn = SearchConnection('http://esgf-node.ipsl.upmc.fr/esg-search', distrib=True)
 ctx = conn.new_context(
-  project="CORDEX-Adjust", domain="EUR-11", time_frequency="day", facets="ensemble"
+  project="CORDEX-Adjust", domain="EUR-11", time_frequency="day", facets="ensemble", latest=True,
   )
 
 ds_all = ctx.search()
@@ -21,7 +21,7 @@ f.close()
 
 conn = SearchConnection('http://esgf-node.ipsl.upmc.fr/esg-search', distrib=True)
 ctx = conn.new_context(
-  project="CORDEX", domain="EUR-11", time_frequency="day", facets="ensemble"
+  project="CORDEX", domain="EUR-11", time_frequency="day", facets="ensemble", latest=True,
   )
 
 ds_all = ctx.search()

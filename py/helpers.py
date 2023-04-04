@@ -29,7 +29,7 @@ def search_single(project="CORDEX", domain="EUR-11", time_frequency="day",
                   **kwargs):
   conn = SearchConnection('http://esgf-node.ipsl.upmc.fr/esg-search', distrib=True)
   ctx = conn.new_context(
-    project=project, domain=domain, time_frequency=time_frequency,
+    project=project, domain=domain, time_frequency=time_frequency, latest=True,
     **kwargs
     )
   ds_all = ctx.search(ignore_facet_check=True)
@@ -37,7 +37,15 @@ def search_single(project="CORDEX", domain="EUR-11", time_frequency="day",
     raise RuntimeWarning("Multiple datasets for: " + str(kwargs))
   return ds_all[0]
 
-
+def search_multiple(project="CORDEX", domain="EUR-11", time_frequency="day",
+                    **kwargs):
+  conn = SearchConnection('http://esgf-node.ipsl.upmc.fr/esg-search', distrib=True)
+  ctx = conn.new_context(
+    project=project, domain=domain, time_frequency=time_frequency,
+    **kwargs
+    )
+  ds_all = ctx.search(ignore_facet_check=True)
+  return ds_all
 
 
 def crop_download(result, path, verbose=True, crop=[-11.0, 0.0, -8.0, -1.0]):

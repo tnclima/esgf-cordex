@@ -1,6 +1,6 @@
 # download missing models and crop to GAR
 
-path_out = "/home/climatedata/eurocordex2/"
+path_out = "/home/climatedata/eurocordex2-rest/"
 
 # modules
 import os
@@ -15,8 +15,10 @@ esgf_logon()
 
 
 # read in
-data_todo_ens = pd.read_csv("data-raw/to-download4_rest_ensemble.csv")
-data_todo_ens.drop("time_frequency", axis=1, inplace=True)
+data_todo_ens = pd.read_csv("data-raw/to-download2-rest-ensemble.csv")
+data_todo_ens.drop("institute_rcm", axis=1, inplace=True)
+data_todo_ens.rename(columns={"gcm": "driving_model"}, inplace=True)
+data_todo_ens.rename(columns={"downscale_realisation": "rcm_version"}, inplace=True)
 
 for i in range(len(data_todo_ens)):
   ds = search_single(**data_todo_ens.iloc[i].to_dict())
