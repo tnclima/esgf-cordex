@@ -15,7 +15,7 @@ esgf_logon()
 
 
 # read and proc to download
-data_todo1 = pd.read_csv("data-raw/to-download2-rest-ensemble.csv")
+data_todo1 = pd.read_csv("data-raw/to-download2-rest-ensemble-orog.csv")
 data_todo1.drop("institute_rcm", axis=1, inplace=True)
 data_todo1.rename(columns={"gcm": "driving_model"}, inplace=True)
 data_todo1.rename(columns={"downscale_realisation": "rcm_version"}, inplace=True)
@@ -28,12 +28,13 @@ for i in range(len(data_todo1)):
   file_wget_path = os.path.join(ds_path, file_wget)
   
   if not os.path.exists(file_wget_path):
-    ds = search_single(project="CORDEX", **data_todo1.iloc[i].to_dict())
+    ds = search_single(project="CORDEX", time_frequency="fx", **data_todo1.iloc[i].to_dict())
     fc = ds.file_context()
     wget_script_content = fc.get_download_script()
 
     with open(file_wget_path, "w") as f:
       f.write(wget_script_content)
+
 
 
 

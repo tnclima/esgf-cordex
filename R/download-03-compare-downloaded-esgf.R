@@ -7,26 +7,42 @@ library(fs)
 
 # downloaded --------------------------------------------------------------
 
+# raw & adjust
+
 dat_inv <- get_inventory("/home/climatedata/eurocordex/merged/")
-# dat_inv_files <- get_inventory("/home/climatedata/eurocordex/merged/", add_files = T)
 dat_inv
 
 dat_check <- check_inventory(dat_inv)
 dat_check
 
 
+# rest of raw
+dat_inv2 <- get_inventory("/home/climatedata/eurocordex2-rest/merged/")
+dat_inv2
+
+dat_check2 <- check_inventory(dat_inv2)
+dat_check2
+
 # get common adjust and raw -------------------------------------------
 
+# with size (not updated)
+# tibble(ll = readLines("data-raw/datasets-cordex-full.txt")) %>%
+#   separate(ll, c("zz", "esgf_node", "size"), sep = "[|]") %>%
+#   separate(zz, c("project", "product", "domain", "institute",
+#                  "driving_model", "experiment", "ensemble",
+#                  "rcm_name", "rcm_version", "time_frequency",
+#                  "variable", "version"), sep = "[.]") %>% 
+#   mutate(size_byte = as.numeric(size),
+#          size_GB_europe = size_byte/1024/1024/1024,
+#          size_GB_GAR = size_GB_europe/20) -> dat_esgf_raw
 
-tibble(ll = readLines("data-raw/datasets-cordex-with-size.txt")) %>%
-  separate(ll, c("zz", "esgf_node", "size"), sep = "[|]") %>%
+# without size
+tibble(ll = readLines("data-raw/datasets-cordex-full.txt")) %>%
+  separate(ll, c("zz", "esgf_node"), sep = "[|]") %>%
   separate(zz, c("project", "product", "domain", "institute",
                  "driving_model", "experiment", "ensemble",
                  "rcm_name", "rcm_version", "time_frequency",
-                 "variable", "version"), sep = "[.]") %>% 
-  mutate(size_byte = as.numeric(size),
-         size_GB_europe = size_byte/1024/1024/1024,
-         size_GB_GAR = size_GB_europe/20) -> dat_esgf_raw
+                 "variable", "version"), sep = "[.]") -> dat_esgf_raw
 
 tibble(ll = readLines("data-raw/datasets-cordex-adjust-with-size.txt")) %>% 
   separate(ll, c("zz", "esgf_node", "size"), sep = "[|]") %>% 
@@ -165,5 +181,57 @@ dat_esgf_raw %>%
   anti_join(dat_inv) -> dat_todo_rest
 
 fwrite(dat_todo_rest, "data-raw/to-download2-rest-ensemble.csv")
+
+
+
+# rest of ensemble orog ----------------------------------------
+
+
+
+tibble(ll = readLines("data-raw/datasets-cordex-fx.txt")) %>%
+  separate(ll, c("zz", "esgf_node"), sep = "[|]") %>%
+  separate(zz, c("project", "product", "domain", "institute",
+                 "driving_model", "experiment", "ensemble",
+                 "rcm_name", "rcm_version", "time_frequency",
+                 "variable", "version"), sep = "[.]")  -> dat_esgf_fx
+
+
+
+dat_esgf_fx %>% 
+  filter(variable == "orog") %>% 
+  group_by(rcm_name) %>% 
+  slice_head(n = 1) %>% 
+  
+  select(institute:rcm_version, variable) %>%
+  rename(gcm = driving_model,
+         downscale_realisation = rcm_version) %>%
+  mutate(institute_rcm = paste0(institute, "-", rcm_name)) %>%
+  filter(! institute_rcm %in% c("UHOH-WRF361H", "DHMZ-RegCM4-2", "CNRM-ALADIN53")) %>% 
+  # potentially also remove RMIB-UGent-ALARO-0, ICTP-RegCM4-6
+  anti_join(dat_inv) -> dat_todo_fx
+
+fwrite(dat_todo_fx, "data-raw/to-download2-rest-ensemble-orog.csv")
+
+
+
+# missing historical in rest of raw ---------------------------------------
+
+dat_scen <- dat_check2$missing_historical[, 
+                                          .(variable, domain, gcm, institute_rcm, experiment,
+                                            ensemble, downscale_realisation, timefreq)]
+dat_scen %>% with(table(variable, paste0(gcm, "_", institute_rcm)))
+dat_scen2 <- unique(dat_scen[, !"experiment"])
+
+dat_esgf_raw %>% 
+  filter(experiment == "historical") %>% 
+  rename(gcm = driving_model,
+         downscale_realisation = rcm_version) %>%
+  mutate(institute_rcm = paste0(institute, "-", rcm_name)) %>%
+  right_join(dat_scen2[variable == "pr"]) -> dat_zz
+  # inner_join(dat_scen2[variable == "pr"]) -> dat_zz
+
+
+
+
 
 
