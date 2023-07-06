@@ -23,6 +23,13 @@ dat_inv2
 dat_check2 <- check_inventory(dat_inv2)
 dat_check2
 
+# orog
+dat_inv_orog <- rbind(
+  get_inventory("/home/climatedata/eurocordex2-rest/orog/"),
+  get_inventory("/home/climatedata/eurocordex/orog/")
+)
+
+
 # get common adjust and raw -------------------------------------------
 
 # with size (not updated)
@@ -206,9 +213,9 @@ dat_esgf_fx %>%
   rename(gcm = driving_model,
          downscale_realisation = rcm_version) %>%
   mutate(institute_rcm = paste0(institute, "-", rcm_name)) %>%
-  filter(! institute_rcm %in% c("UHOH-WRF361H", "DHMZ-RegCM4-2", "CNRM-ALADIN53")) %>% 
+  # filter(! institute_rcm %in% c("UHOH-WRF361H", "DHMZ-RegCM4-2", "CNRM-ALADIN53")) %>% 
   # potentially also remove RMIB-UGent-ALARO-0, ICTP-RegCM4-6
-  anti_join(dat_inv) -> dat_todo_fx
+  anti_join(dat_inv_orog) -> dat_todo_fx
 
 fwrite(dat_todo_fx, "data-raw/to-download2-rest-ensemble-orog.csv")
 

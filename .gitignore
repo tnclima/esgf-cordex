@@ -9,3 +9,4 @@ py/__pycache__/
 data-extract/
 *.log
 *.Rout
+data-raw/datasets-cmip5-with-files-and-size.txt
