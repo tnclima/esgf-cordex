@@ -1,6 +1,6 @@
 # run wget scripts manually later
 
-path_out = "/home/climatedata/temp-cmip5/wget-dayly/"
+path_out = "/home/climatedata/temp-cmip5/wget-daily/"
 variables = ["tas", "tasmin", "tasmax", "pr"]
 
 from pyesgf.search import SearchConnection
