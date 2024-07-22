@@ -1,11 +1,12 @@
 # merge extracted data
+
 library(foreach)
 library(data.table)
+setDTthreads(4)
 library(fs)
 library(stringr)
 
 path_out <- "data-extract/mg-export/"
-
 
 dir_stns <- dir_ls("data-extract/mg/", type = "directory")
 
@@ -47,46 +48,13 @@ foreach(
   }
   
   
-  # raw data ----------------------------------------------------------------
+  # tas/pr data ----------------------------------------------------------------
   
-  dir_raw <- str_subset(dir_vars, "orog|Adjust", negate = T)
+  dir_raw <- str_subset(dir_vars, "orog", negate = T)
   
   
   dat_raw <- foreach(
     i_dir_stn_var = dir_raw,
-    .final = function(l) Reduce(merge, l)
-  ) %do% {
-    
-    foreach(
-      fn = list.files(i_dir_stn_var, full.names = T, recursive = F),
-      .final = rbindlist
-    ) %do% {
-      
-      dat <- readRDS(fn)
-      fn_split <- strsplit(fn %>% path_file() %>% path_ext_remove(), "_")[[1]]
-      dir_split <- strsplit(dirname(fn), "/")[[1]]
-      
-      dat[, ":="(stn = tail(dir_split, 2)[1],
-                 gcm = fn_split[1],
-                 rcm = fn_split[2],
-                 experiment = fn_split[3],
-                 ensemble = fn_split[4],
-                 rcm_version = fn_split[5])]
-      
-      dat
-      
-    }
-    
-  }
-  
-  
-  # adjusted data -----------------------------------------------------------
-  
-  dir_adj <- str_subset(dir_vars, "Adjust")
-  
-  
-  dat_adj <- foreach(
-    i_dir_stn_var = dir_adj,
     .final = function(l) Reduce(merge, l)
   ) %do% {
     
@@ -129,19 +97,13 @@ foreach(
   
   # deg C and mm
   dat_raw[, ":="(pr = pr * 24*60*60, 
-                 tas = tas - 273.15,
-                 tasmin = tasmin - 273.15,
-                 tasmax = tasmax - 273.15)]
-  dat_adj[, ":="(prAdjust = prAdjust * 24*60*60, 
-                 tasAdjust = tasAdjust - 273.15,
-                 tasminAdjust = tasminAdjust - 273.15,
-                 tasmaxAdjust = tasmaxAdjust - 273.15)]
+                 tas = tas - 273.15)]
+  
   
   dir_create(path(path_out, path_file(i_dir_stn)))
   
   fwrite(dat_orog, file = path(path_out, path_file(i_dir_stn), "elevation.csv"))
   fwrite(dat_raw, file = path(path_out, path_file(i_dir_stn), "rcm-raw.csv"))
-  fwrite(dat_adj, file = path(path_out, path_file(i_dir_stn), "rcm-adjusted.csv"))
   
 }
 
