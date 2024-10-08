@@ -3,104 +3,59 @@ import os
 
 c = ddsapi.Client()
 
-path_out = "/home/climatedata/temp-vhr-pro/"
-i_file_out = os.path.join(path_out, "test2.nc")
+path_out = "/home/climatedata/temp-cmcc-dds/vhr-pro/"
 
-c.retrieve("climate-projections-rcp85-downscaled-over-italy", "historical",
-{
-    "area": {
-        "north": 46.7,
-        "south": 45.3,
-        "east": 12.5,
-        "west": 10
-    },
-    "time": {
-        "hour": [
-            "00",
-            "01",
-            "02",
-            "03",
-            "04",
-            "05",
-            "06",
-            "07",
-            "08",
-            "09",
-            "10",
-            "11",
-            "12",
-            "13",
-            "14",
-            "15",
-            "16",
-            "17",
-            "18",
-            "19",
-            "20",
-            "21",
-            "22",
-            "23"
-        ],
-        "year": [
-            "1981"
-        ],
-        "month": [
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "7",
-            "8",
-            "9",
-            "10",
-            "11",
-            "12"
-        ],
-        "day": [
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "7",
-            "8",
-            "9",
-            "10",
-            "11",
-            "12",
-            "13",
-            "14",
-            "15",
-            "16",
-            "17",
-            "18",
-            "19",
-            "20",
-            "21",
-            "22",
-            "23",
-            "24",
-            "25",
-            "26",
-            "27",
-            "28",
-            "29",
-            "30",
-            "31"
-        ]
-    },
-    "variable": [
-        "surface_net_downward_shortwave_flux",
-        "air_temperature",
-        "lwe_thickness_of_surface_snow_amount",
-        "grid_northward_wind",
-        "grid_eastward_wind",
-        "specific_humidity",
-        "precipitation_amount"
-    ],
-    "format": "netcdf"
-},
-i_file_out)
+# variables = ["rsds", "tas", "snw", "vas", "uas", "huss", "pr"]
+# variables_dds = [
+#     "surface_net_downward_shortwave_flux",
+#     "air_temperature",
+#     "lwe_thickness_of_surface_snow_amount",
+#     "grid_northward_wind",
+#     "grid_eastward_wind",
+#     "specific_humidity",
+#     "precipitation_amount"
+# ]
+
+variables = ["tdew", "psl"]
+variables_dds = [
+    "dew_point_temperature",
+    "air_pressure_at_sea_level"
+]
+
+
+for i in range(len(variables)):
+
+  # rcps
+  all_rcps = ["historical", "rcp45", "rcp85"]
+  for i_rcp in all_rcps:
+    
+    if i_rcp == "historical":
+      all_years = range(1981, 2006)
+    else:
+      all_years = range(2006, 2071)
+      
+    for i_year in all_years:
+    
+      os.makedirs(os.path.join(path_out, variables[i]), exist_ok=True)
+      i_file_out = os.path.join(path_out, 
+                                variables[i],
+                                variables[i] + "_" + i_rcp + "_" + str(i_year) + "_cmcc2km_tn.nc")
+      c.retrieve("climate-projections-rcp85-downscaled-over-italy", i_rcp,
+        {
+            "area": {
+                "north": 46.7,
+                "south": 45.3,
+                "east": 12.5,
+                "west": 10
+            },
+            "time": {
+                "year": i_year
+            },
+            "variable": variables_dds[i],
+            "format": "netcdf"
+        },
+        i_file_out)
+
+
+
+
